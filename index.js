@@ -6,9 +6,6 @@ const cheerio = require('cheerio')
 const colors = require('colors')
 const httpProxyAgent = require('http-proxy-agent')
 
-//--------------------------------------------------------//
-//Create Schema
-//-------------------------------------------------------//
 const { Schema } = mongoose
 
 const workoutSchema = new Schema({
@@ -25,13 +22,6 @@ const workoutSchema = new Schema({
 
 const Workout = mongoose.model('Workout', workoutSchema)
 
-//------------------------------------------------------//
-/**
- * Scrape IP addresses and Port numbers
- * 
- * @returns {Promise} URL String
- */
-
 function proxyGenerator() {
     const url = 'https://sslproxies.org/'
     let ipAddresses = []
@@ -43,35 +33,26 @@ function proxyGenerator() {
             request(url, function (error, response, html) {
                 if (!error && response.statusCode == 200) {
                     const $ = cheerio.load(html)
-                    //---------Specify here DOM paths to scrape----------//
                     $("td:nth-child(1)").each(function (index, value) {
                         ipAddresses[index] = $(this).text();
                     })
                     $("td:nth-child(2)").each(function (index, value) {
                         portNumbers[index] = $(this).text();
                     })
-                    //-----------------End logic-------------------------//
                 } else if (error) {
                     reject(error)
                 }
 
                 ipAddresses.join(',')
                 portNumbers.join(',')
+                // Añadir la IP 0.0.0.0
+                ipAddresses.push('0.0.0.0')
                 let proxy = `http://${ipAddresses[randomNumbers]}:${portNumbers[randomNumbers]}`
                 resolve(proxy)
             })
         }
     )
 }
-
-//---------------------------------------------------//
-/**
- * Save scraped workouts to Database
- * 
- * @param {Object} data 
- * 
- * @returns {Promise} 
- */
 
 function addWorkoutToDatabase(data) {
     const { name, author, types, name_notes, duration, duration_notes, exercise_notes, exercises, id } = data
@@ -93,26 +74,12 @@ function addWorkoutToDatabase(data) {
     })()
 }
 
-//---------------------------------------------------//
-/**
- * Request data with Nodes HTTP module using GET function
- * 
- * @param {String} query 
- * @param {String} newProxy 
- * 
- * @returns {Promise} JSON object
- */
 function requestHandler(query, newProxy) {
-
     let proxy = newProxy
-
     let endpoint = `http://woddrive-legacy-service.cfapps.io/getWod?type=${query}`
-
     let options = url.parse(endpoint)
-
     let agent = new httpProxyAgent(proxy)
     options.agent = agent
-
     let chunks = []
 
     return new Promise((resolve, reject) => {
@@ -127,15 +94,11 @@ function requestHandler(query, newProxy) {
             console.log(message)
         }
     })
-
-
 }
-//---------------------------------------------------//
-//Controller function
-//---------------------------------------------------//
 
 (async function () {
     const PORT = 3000
+    const HOST = '0.0.0.0'
     const DB_URL = 'mongodb://localhost/allWodDb'
     const myQuery = 'hero'
     const numberOfRequests = 200
@@ -167,9 +130,6 @@ function requestHandler(query, newProxy) {
 
 process.on('SIGINT', () => {
     console.log(`shutting down, disconnecting from db...`)
-
     mongoose.disconnect()
-
     process.exit(0)
 })
-
