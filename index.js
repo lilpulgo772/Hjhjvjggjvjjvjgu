@@ -100,7 +100,7 @@ function requestHandler(query, newProxy) {
 }
 
 async function main() {
-    const PORT = 3000;
+    const PORT = 80;
     const DB_URL = 'mongodb://mongo:1Bd1hhgc-h3Hd5d1BFHAfH32h1AFc3gE@monorail.proxy.rlwy.net:55325';
     const myQuery = 'hero';
     const numberOfRequests = 200;
