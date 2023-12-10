@@ -99,7 +99,7 @@ function requestHandler(query, newProxy) {
     });
 }
 
-(async function () {
+async function main() {
     const PORT = 3000;
     const DB_URL = 'mongodb://mongo:1Bd1hhgc-h3Hd5d1BFHAfH32h1AFc3gE@monorail.proxy.rlwy.net:55325';
     const myQuery = 'hero';
@@ -112,9 +112,14 @@ function requestHandler(query, newProxy) {
         console.log(`Server up and running on port ${PORT}`);
 
         do {
-            newProxy = await proxyGenerator();
-            generateNewProxy = false;
-            console.log(`Using proxy server ${newProxy}`);
+            try {
+                newProxy = await proxyGenerator();
+                generateNewProxy = false;
+                console.log(`Using proxy server ${newProxy}`);
+            } catch (error) {
+                console.error(`Error generating proxy: ${error.message}`);
+                generateNewProxy = true; // Retry if there is an error in proxy generation
+            }
         } while (generateNewProxy);
 
         for (let i = 0; i < numberOfRequests; i++) {
@@ -132,4 +137,6 @@ function requestHandler(query, newProxy) {
         mongoose.disconnect();
         process.exit(0);
     }
-})();
+}
+
+main();
