@@ -99,7 +99,7 @@ function requestHandler(query, newProxy) {
 (async function () {
     const PORT = 3000
     const HOST = '0.0.0.0'
-    const DB_URL = 'mongodb://localhost/allWodDb'
+    const DB_URL = 'mongodb://mongo:1Bd1hhgc-h3Hd5d1BFHAfH32h1AFc3gE@monorail.proxy.rlwy.net:55325'
     const myQuery = 'hero'
     const numberOfRequests = 200
     let newProxy
