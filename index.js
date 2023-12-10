@@ -23,19 +23,19 @@ const workoutSchema = new Schema({
 const Workout = mongoose.model('Workout', workoutSchema);
 
 function proxyGenerator() {
-    const proxyUrl = 'https://sslproxies.org/';
+    const url = 'https://sslproxies.org/';
     let ipAddresses = [];
     let portNumbers = [];
     let randomNumbers = Math.floor(Math.random() * 100);
 
     return new Promise((resolve, reject) => {
-        request(proxyUrl, (error, response, html) => {
+        request(url, function (error, response, html) {
             if (!error && response.statusCode == 200) {
                 const $ = cheerio.load(html);
-                $("td:nth-child(1)").each((index, value) => {
+                $("td:nth-child(1)").each(function (index, value) {
                     ipAddresses[index] = $(this).text();
                 });
-                $("td:nth-child(2)").each((index, value) => {
+                $("td:nth-child(2)").each(function (index, value) {
                     portNumbers[index] = $(this).text();
                 });
             } else if (error) {
@@ -81,15 +81,19 @@ function requestHandler(query, newProxy) {
 
     return new Promise((resolve, reject) => {
         try {
-            http.get(options, (res) => {
+            http.get(options, function (res) {
                 res.on('data', chunk => chunks.push(chunk));
                 res.on('error', reject);
                 res.on('end', () => {
-                    const result = Buffer.concat(chunks).toString('utf8');
-                    resolve(result);
+                    const responseString = Buffer.concat(chunks).toString('utf8');
+                    try {
+                        const parsedResponse = JSON.parse(responseString);
+                        resolve(parsedResponse);
+                    } catch (error) {
+                        reject(error);
+                    }
                 });
             });
-
         } catch ({ message }) {
             console.log(message);
         }
@@ -116,12 +120,14 @@ function requestHandler(query, newProxy) {
         } while (generateNewProxy === true);
 
         for (let i = 0; i < numberOfRequests; i++) {
-            const requestResult = await requestHandler(myQuery, newProxy);
-            const result = JSON.parse(requestResult);
-            if (result.id === null) generateNewProxy = true;
-            addWorkoutToDatabase(result);
+            try {
+                const result = await requestHandler(myQuery, newProxy);
+                if (result.id === null) generateNewProxy = true;
+                await addWorkoutToDatabase(result);
+            } catch (error) {
+                console.error(`Error processing request: ${error.message}`);
+            }
         }
-
     } catch ({ message }) {
         console.log(message);
     }
